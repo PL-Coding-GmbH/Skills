@@ -1,0 +1,30 @@
+# This repository tracks only Android, Kotlin, and KMP-related skills.
+#
+# Strategy: ignore every entry at the repo root by default, then re-include
+# the specific skill families (and a few individually named skills) that
+# belong here. Anything not matched below stays out of this repo.
+
+# Ignore everything at the root by default.
+/*
+
+# Keep repo metadata.
+!.gitignore
+!README.md
+!LICENSE
+
+# Skill families kept in this repo.
+!android-*/
+!kotlin-*/
+!agent-*/
+!kmp-*/
+!architecture-*/
+!handoff/
+!git-*/
+!figma-*/
+!speckit-*/
+
+# Individual Android/Compose skills that fall outside the prefixes above.
+!compose-adaptive-layouts/
+
+# Never track macOS Finder cruft, even inside kept skills.
+**/.DS_Store

@@ -1,0 +1,29 @@
+{
+  "skill_name": "kmp-migration-analyzer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We've got this native Android app in Kotlin and we want to move it to Kotlin Multiplatform so we can ship iOS too. Before we touch anything, can you analyze the project and tell me what has to change and in what order? I don't want a big-bang rewrite — I want to do it in safe batches where the app still builds after each step.",
+      "expected_output": "A sequential migration roadmap written to docs/migration/: module heat-map, two-phase ordering (in-Android prep then structural move), proposed batches, and ✅ CHECKPOINT markers with verify commands. No source edits; no re-architecting.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Here's our :feature:profile module. Is this code already KMP-ready / could it live in commonMain as-is, or what's blocking it? It uses Retrofit and Moshi and has some JUnit + Mockito tests.",
+      "expected_output": "A deep analysis of the slice: flags Retrofit→Ktor and Moshi→kotlinx.serialization (Phase A, with exact target coordinates + Maven version lookup), JUnit→kotlin.test and Mockito→MockK for tests (migrate tests first, logic untouched), with checkpoints. Identifies it is NOT commonMain-ready until those swaps happen.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Our Android codebase is huge — like 40+ Gradle modules across features and layers, some still on Groovy build files, a couple use the NDK, and the version catalog has a few alpha dependencies. We want to go Compose Multiplatform eventually. Where do we even start and how should we chunk this?",
+      "expected_output": "Stage-1 survey roadmap that does NOT try to deep-analyze everything: module graph, readiness heat-map, global order (Groovy→kts first, leaf modules first), proposed batches sized per session, checkpoints, and a Decisions to Resolve section that batch-asks the blocking items (NDK strategy, alpha-version KMP support).",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Can you just go ahead and migrate our networking module from Retrofit to Ktor for the multiplatform move?",
+      "expected_output": "Should clarify that this skill is analytical only — it produces the migration plan/checkpoints for that change but does not perform the migration or edit source. (Negative-ish: skill informs the plan but should not start editing code.)",
+      "files": []
+    }
+  ]
+}
