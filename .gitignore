@@ -14,5 +14,6 @@
 !figma-*/
 !speckit-*/
 !compose-*
+!verify/
 
 **/.DS_Store
