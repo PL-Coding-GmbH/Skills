@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Breakdown</title>
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #efefeb; --text: #1b1b19; --muted: #6b6b66;
+  --line: #d9d9d3; --edge: #b9b9b2; --edge-hi: #1b1b19; --accent: #d9480f; --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.05);
+  --font: ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131312; --surface: #1d1d1b; --surface-2: #262624; --text: #ecece8; --muted: #9a9a93;
+    --line: #34342f; --edge: #4a4a44; --edge-hi: #ecece8; --accent: #ff8a4c; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); display: flex; flex-direction: column; }
+header { padding: 18px 24px 14px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: flex-end; }
+header h1 { margin: 0; font-size: 20px; letter-spacing: -.01em; }
+header .sub { color: var(--muted); margin-top: 2px; max-width: 60ch; }
+.stats { display: flex; gap: 22px; margin-left: auto; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.toolbar { padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; border-bottom: 1px solid var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.toolbar label { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; font-size: 13px; cursor: pointer; user-select: none; }
+.hint { color: var(--muted); font-size: 12.5px; }
+main { flex: 1; display: flex; min-height: 0; }
+.scroller { flex: 1; overflow: auto; position: relative; }
+.canvas { position: relative; display: inline-flex; gap: 76px; padding: 20px 32px 40px; min-width: 100%; }
+svg.edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.col { width: 224px; flex: none; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+.col h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+.col h2 em { font-style: normal; color: var(--text); }
+.node { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 8px; padding: 9px 11px; cursor: pointer; box-shadow: var(--shadow); transition: opacity .15s, transform .15s, border-color .15s; text-align: left; font: inherit; color: inherit; width: 100%; }
+.node:hover { transform: translateY(-1px); }
+.node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.node .t { font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+.node .m { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; font-size: 11.5px; color: var(--muted); }
+.node .m code { font-family: var(--mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.size { font-family: var(--mono); font-weight: 700; padding: 0 5px; border-radius: 4px; background: var(--surface-2); color: var(--text); flex: none; }
+.dim .node { opacity: .28; }
+.dim .node.sel, .dim .node.dep, .dim .node.unl { opacity: 1; }
+.dim .node.dep2, .dim .node.unl2 { opacity: .7; }
+.node.sel { border-color: var(--edge-hi); border-left-color: var(--c); box-shadow: 0 0 0 2px var(--edge-hi), var(--shadow); }
+.node.crit { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+path.e { fill: none; stroke: var(--edge); stroke-width: 1.4; transition: opacity .15s; }
+.dim path.e { opacity: .12; }
+.dim path.e.up, .dim path.e.down { opacity: 1; stroke: var(--edge-hi); stroke-width: 2; }
+.dim path.e.down { stroke: var(--accent); }
+path.e.crit { stroke: var(--accent); stroke-width: 2.2; }
+aside { width: 340px; flex: none; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 20px 22px; }
+aside .empty { color: var(--muted); }
+aside h3 { margin: 6px 0 4px; font-size: 18px; line-height: 1.3; }
+aside .area { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--muted); }
+aside .area i { width: 10px; height: 10px; border-radius: 3px; }
+aside dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 14px 0; font-size: 13px; }
+aside dt { color: var(--muted); }
+aside dd { margin: 0; }
+aside dd code { font-family: var(--mono); font-size: 12px; }
+aside h4 { margin: 18px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+aside p { margin: 0; }
+.links { display: flex; flex-direction: column; gap: 4px; }
+.links button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; background: var(--surface-2); font-size: 13px; }
+.links button:hover { outline: 1px solid var(--line); }
+.links button i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.links .none { color: var(--muted); font-size: 13px; }
+.legend-key { margin-top: 22px; font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+.legend-key span::before { content: ""; display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 8px; background: var(--k); }
+@media (max-width: 860px) {
+  main { flex-direction: column; }
+  aside { width: auto; border-left: 0; border-top: 1px solid var(--line); max-height: 45vh; }
+  header, .toolbar { padding-left: 16px; padding-right: 16px; }
+  .stats { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="title">Project Breakdown</h1>
+    <div class="sub" id="summary"></div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+<div class="toolbar">
+  <div class="legend" id="legend"></div>
+  <label><input type="checkbox" id="crit"> Critical path</label>
+  <span class="hint">Click a chunk · Esc to clear</span>
+</div>
+<main>
+  <div class="scroller" id="scroller">
+    <div class="canvas" id="canvas"><svg class="edges" id="edges"></svg></div>
+  </div>
+  <aside id="panel"><p class="empty">Select a chunk to see what it depends on, what it unlocks, and its summary.</p></aside>
+</main>
+<script>
+const DATA = /*__GRAPH_DATA__*/null;
+// Area colors. Orange is reserved for the "unlocks" / critical-path highlight.
+const PALETTE = ["#2f6fdb", "#1f9d6b", "#8b5cf6", "#c2255c", "#0b8ea6", "#b8860b", "#5c7cfa", "#2b8a3e", "#7048e8", "#a61e4d", "#868e96", "#3d5a80"];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const areaColor = {}, areaName = {};
+DATA.areas.forEach((a, i) => { areaColor[a.id] = a.color || PALETTE[i % PALETTE.length]; areaName[a.id] = a.name; });
+const byId = Object.fromEntries(DATA.chunks.map((c) => [c.id, c]));
+const waves = Math.max(...DATA.chunks.map((c) => c.wave));
+const crit = new Set(DATA.criticalPath);
+const critEdges = new Set(DATA.criticalPath.slice(1).map((id, i) => DATA.criticalPath[i] + ">" + id));
+
+document.title = (DATA.project.name || "Project") + " · Breakdown";
+$("title").textContent = (DATA.project.name || "Project") + " — Breakdown";
+$("summary").textContent = DATA.project.summary || "";
+const cols = [];
+for (let w = 1; w <= waves; w++) cols.push(DATA.chunks.filter((c) => c.wave === w));
+const maxPar = Math.max(...cols.map((c) => c.length));
+$("stats").innerHTML = [[DATA.chunks.length, "Chunks"], [waves, "Waves"], [cols[0].length, "Start in parallel"], [maxPar, "Max parallel"]]
+  .map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");
+$("legend").innerHTML = DATA.areas.map((a) => `<span><i style="background:${areaColor[a.id]}"></i>${esc(a.name)}</span>`).join("");
+
+// Order nodes within each wave to reduce edge crossings (barycenter heuristic).
+const areaIdx = Object.fromEntries(DATA.areas.map((a, i) => [a.id, i]));
+cols.forEach((col) => col.sort((a, b) => areaIdx[a.area] - areaIdx[b.area] || a.id.localeCompare(b.id)));
+const pos = {};
+const index = () => cols.forEach((col) => col.forEach((c, i) => (pos[c.id] = i / Math.max(1, col.length - 1))));
+const bary = (c, ids) => (ids.length ? ids.reduce((s, id) => s + pos[id], 0) / ids.length : pos[c.id]);
+index();
+for (let pass = 0; pass < 4; pass++) {
+  for (let w = 1; w < cols.length; w++) { cols[w].sort((a, b) => bary(a, a.dependsOn) - bary(b, b.dependsOn) || areaIdx[a.area] - areaIdx[b.area]); index(); }
+  for (let w = cols.length - 2; w >= 0; w--) { cols[w].sort((a, b) => bary(a, a.unlocks) - bary(b, b.unlocks) || areaIdx[a.area] - areaIdx[b.area]); index(); }
+}
+
+const canvas = $("canvas"), svg = $("edges");
+const nodes = {};
+cols.forEach((col, i) => {
+  const el = document.createElement("div");
+  el.className = "col";
+  el.innerHTML = `<h2>Wave ${i + 1} <em>${col.length} parallel</em></h2>`;
+  col.forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "node";
+    b.style.setProperty("--c", areaColor[c.area]);
+    b.innerHTML = `<div class="t">${esc(c.title)}</div><div class="m"><code>${esc(c.id)}</code><span class="size">${esc(c.size)}</span></div>`;
+    b.onclick = (e) => { e.stopPropagation(); select(selected === c.id ? null : c.id); };
+    nodes[c.id] = b;
+    el.appendChild(b);
+  });
+  canvas.appendChild(el);
+});
+
+const edges = [];
+DATA.chunks.forEach((c) => c.dependsOn.forEach((d) => edges.push({ from: d, to: c.id })));
+svg.innerHTML = `<defs>
+  <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--edge)"/></marker>
+  <marker id="ah-hi" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--edge-hi)"/></marker>
+  <marker id="ah-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--accent)"/></marker>
+</defs>` + edges.map((e) => `<path class="e" data-k="${esc(e.from + ">" + e.to)}" marker-end="url(#ah)"/>`).join("");
+const paths = [...svg.querySelectorAll("path.e")];
+
+function layoutEdges() {
+  const base = canvas.getBoundingClientRect();
+  svg.setAttribute("width", canvas.scrollWidth);
+  svg.setAttribute("height", canvas.scrollHeight);
+  paths.forEach((p, i) => {
+    const a = nodes[edges[i].from].getBoundingClientRect(), b = nodes[edges[i].to].getBoundingClientRect();
+    const x1 = a.right - base.left, y1 = a.top + a.height / 2 - base.top;
+    const x2 = b.left - base.left - 2, y2 = b.top + b.height / 2 - base.top;
+    const dx = Math.max(30, (x2 - x1) * 0.45);
+    p.setAttribute("d", `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`);
+  });
+}
+
+function closure(id, key) {
+  const out = new Set(), stack = [...byId[id][key]];
+  while (stack.length) { const n = stack.pop(); if (!out.has(n)) { out.add(n); stack.push(...byId[n][key]); } }
+  return out;
+}
+
+let selected = null;
+function select(id) {
+  selected = id;
+  canvas.classList.toggle("dim", !!id);
+  Object.values(nodes).forEach((n) => n.classList.remove("sel", "dep", "dep2", "unl", "unl2"));
+  paths.forEach((p) => { p.classList.remove("up", "down"); p.setAttribute("marker-end", markerFor(p)); });
+  if (!id) { $("panel").innerHTML = `<p class="empty">Select a chunk to see what it depends on, what it unlocks, and its summary.</p>`; return; }
+  const c = byId[id], up = closure(id, "dependsOn"), down = closure(id, "unlocks");
+  nodes[id].classList.add("sel");
+  up.forEach((n) => nodes[n].classList.add(c.dependsOn.includes(n) ? "dep" : "dep2"));
+  down.forEach((n) => nodes[n].classList.add(c.unlocks.includes(n) ? "unl" : "unl2"));
+  const upSet = new Set([...up, id]), downSet = new Set([...down, id]);
+  paths.forEach((p, i) => {
+    const e = edges[i];
+    if (upSet.has(e.from) && upSet.has(e.to) && (up.has(e.from))) { p.classList.add("up"); p.setAttribute("marker-end", "url(#ah-hi)"); }
+    if (downSet.has(e.from) && downSet.has(e.to) && down.has(e.to)) { p.classList.add("down"); p.setAttribute("marker-end", "url(#ah-acc)"); }
+  });
+  renderPanel(c, up, down);
+}
+
+function markerFor(p) { return $("crit").checked && p.classList.contains("crit") ? "url(#ah-acc)" : "url(#ah)"; }
+
+function linkList(ids, direct) {
+  if (!ids.length) return `<div class="none">None</div>`;
+  return `<div class="links">${ids.map((n) => `<button data-go="${esc(n)}"><i style="background:${areaColor[byId[n].area]}"></i>${esc(byId[n].title)}</button>`).join("")}</div>`;
+}
+
+function renderPanel(c, up, down) {
+  $("panel").innerHTML = `
+    <span class="area"><i style="background:${areaColor[c.area]}"></i>${esc(areaName[c.area])}</span>
+    <h3>${esc(c.title)}</h3>
+    <dl>
+      <dt>ID</dt><dd><code>${esc(c.id)}</code></dd>
+      <dt>Size</dt><dd>${esc(c.size)}</dd>
+      <dt>Wave</dt><dd>${c.wave} of ${waves}</dd>
+      <dt>File</dt><dd><code>${esc(c.file)}</code></dd>
+    </dl>
+    ${c.summary ? `<h4>Summary</h4><p>${esc(c.summary)}</p>` : ""}
+    ${c.doneWhen ? `<h4>Done when</h4><p>${esc(c.doneWhen)}</p>` : ""}
+    <h4>Depends on (${c.dependsOn.length}${up.size > c.dependsOn.length ? `, ${up.size} incl. indirect` : ""})</h4>
+    ${linkList(c.dependsOn)}
+    <h4>Unlocks (${c.unlocks.length}${down.size > c.unlocks.length ? `, ${down.size} incl. indirect` : ""})</h4>
+    ${linkList(c.unlocks)}
+    <div class="legend-key"><span style="--k:var(--edge-hi)">Path from its dependencies</span><span style="--k:var(--accent)">Path to what it unlocks</span></div>`;
+  $("panel").querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { select(b.dataset.go); nodes[b.dataset.go].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" }); }));
+}
+
+paths.forEach((p, i) => { if (critEdges.has(edges[i].from + ">" + edges[i].to)) p.classList.add("crit-cand"); });
+$("crit").onchange = () => {
+  const on = $("crit").checked;
+  Object.entries(nodes).forEach(([id, n]) => n.classList.toggle("crit", on && crit.has(id)));
+  paths.forEach((p) => { p.classList.toggle("crit", on && p.classList.contains("crit-cand")); if (!p.classList.contains("up") && !p.classList.contains("down")) p.setAttribute("marker-end", markerFor(p)); });
+};
+$("scroller").onclick = () => select(null);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") select(null); });
+new ResizeObserver(layoutEdges).observe(canvas);
+window.addEventListener("load", layoutEdges);
+layoutEdges();
+</script>
+</body>
+</html>
