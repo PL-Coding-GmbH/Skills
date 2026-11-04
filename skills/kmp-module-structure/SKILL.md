@@ -129,6 +129,45 @@ This is why both `CmpLibraryConventionPlugin` and `CmpApplicationConventionPlugi
 
 ---
 
+## Test Source Sets
+
+All tests are written in `commonTest` and run on both platforms (see **kmp-unit-testing**, **kmp-integration-testing**, **kmp-ui-testing**). The `com.android.kotlin.multiplatform.library` plugin creates no Android test compilations by default — enable them in `configureKotlinMultiplatform()`:
+
+```kotlin
+extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
+    // ...compileSdk, minSdk, namespace...
+
+    // Host (JVM) tests: commonTest + androidHostTest → testAndroidHostTest
+    withHostTestBuilder {}.configure {}
+
+    // Device tests: commonTest + androidDeviceTest → connectedAndroidDeviceTest
+    withDeviceTestBuilder {
+        sourceSetTreeName = "test"
+    }.configure {
+        instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+}
+
+// UI tests and Room-touching integration tests must not run on the host JVM.
+// Test tasks are JVM host tests only; device and iOS test tasks are unaffected.
+tasks.withType<Test>().configureEach {
+    filter {
+        excludeTestsMatching("*UiTest")
+        excludeTestsMatching("*IntegrationTest")
+        isFailOnNoMatchingTests = false
+    }
+}
+```
+
+| Source set | Contains | Task |
+|---|---|---|
+| `commonTest` | All shared tests | runs through every task below |
+| `androidHostTest` | Android-only JVM tests | `testAndroidHostTest` |
+| `androidDeviceTest` | Android-only device tests, `actual`s needing a `Context` | `connectedAndroidDeviceTest` |
+| `iosTest` | iOS-only tests, iOS `actual`s | `iosSimulatorArm64Test` |
+
+---
+
 ## Build-Logic Infrastructure
 
 The `:build-logic` module is an included build that contains all convention plugins.
@@ -1013,8 +1052,9 @@ kotlin {
 | Adaptive layouts | Material3 Adaptive (JetBrains) |
 | Secrets | BuildKonfig (reads from `local.properties`) |
 | Background tasks | WorkManager (Android-only) — see **android-background** skill |
-| Testing | JUnit5, Turbine, AssertK, `kotlinx-coroutines-test` |
-| UI testing | `ComposeTestRule` |
+| Testing | `kotlin.test`, Turbine, AssertK, `kotlinx-coroutines-test` (all in `commonTest`) — see **kmp-unit-testing** / **kmp-integration-testing** |
+| UI testing | `runComposeUiTest` (`org.jetbrains.compose.ui:ui-test`) — see **kmp-ui-testing** |
+| Coverage | Kover — see **kmp-kover-setup** |
 
 ---
 
