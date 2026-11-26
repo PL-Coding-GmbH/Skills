@@ -9,10 +9,13 @@ File name: `docs/breakdown/chunks/NN-<id>.md`, with `NN` from the build script o
 |---|---|
 | ID | `<id>` |
 | Area | <Area name> |
-| Size | S / M / L |
+| Size | S / M / L (for L: why it can't be split) |
 | Wave | <n> |
 | Depends on | `<id>` (<what this chunk uses from it>), … or "none" |
 | Unlocks | `<id>`, … or "none" |
+
+## Surface units
+- The units from the surface inventory this chunk builds, or "none".
 
 ## Goal
 One or two sentences: the single outcome of this chunk.
@@ -30,7 +33,7 @@ One or two sentences: the single outcome of this chunk.
 - What later chunks rely on from this one (modules, services, components, contracts, deployed environments).
 
 ## Done when
-- Verifiable criteria. For client feature chunks: works end to end against the fake API layer.
+- Verifiable criteria. For client chunks built before the backend: say what is stubbed.
 
 ## Decisions from the breakdown
 - Stack or architecture decisions from the interview that apply here, with the reason.

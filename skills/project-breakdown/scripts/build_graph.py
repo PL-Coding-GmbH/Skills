@@ -146,6 +146,9 @@ def compute(data):
         for c in chunks:
             if not c.get("dependsOn") and not unlocks[c["id"]]:
                 warnings.append(f"'{c['id']}' is isolated (no dependencies, unlocks nothing)")
+    for c in chunks:
+        if c["size"] == "L":
+            warnings.append(f"'{c['id']}' is L: split it if parts can be verified independently, otherwise state in its chunk file why it can't be split")
     max_wave = max(wave.values())
     for n in range(1, max_wave):
         in_wave = [c for c in chunks if wave[c["id"]] == n]

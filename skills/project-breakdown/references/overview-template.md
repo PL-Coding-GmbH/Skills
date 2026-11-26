@@ -5,7 +5,7 @@
 ```markdown
 # <Project name> — Project Breakdown
 
-> Initial plan created with Project Breakdown v2 on <date>. This is starting context for the chunk sessions, not a living spec. Each chunk session produces its own detailed documents.
+> Initial plan created with Project Breakdown on <date>. This is starting context for the chunk sessions, not a living spec. Each chunk session produces its own detailed documents.
 
 ## Vision
 2–4 sentences: what the product is, who it's for, which platforms.
@@ -22,11 +22,16 @@
 | Area | What it covers | Chunks |
 |---|---|---|
 
+## Surface inventory
+| Area | Unit | Built by chunk |
+|---|---|---|
+
 ## Existing foundations
 What already exists in the repo and is built upon (or "none — greenfield").
 
 ## Structural approach
-- Clients develop against a fake API layer built from the contract and connect to the real backend in a final integration chunk per client.
+- Domain rules and models are settled in wave 1 before chunks that use them.
+- How client and backend work meet, as decided in the interview.
 - Any other project-wide rule decided in the interview.
 
 ## Waves

@@ -38,7 +38,6 @@ For each, confirm it's needed and whether it stands alone or folds into another 
 - Design system and theme (tokens, base components)
 - Navigation shell (often folds into scaffolding)
 - Networking/HTTP client and error model
-- Fake API layer implementing the contract (required whenever a backend is built in this plan)
 - Real-time connection client (if real-time is in scope)
 - Local persistence / offline sync (if offline is in scope)
 - Auth client (session handling, token storage, login flows)
@@ -52,6 +51,7 @@ For each, confirm it's needed and whether it stands alone or folds into another 
 - File/media storage integration (if in scope)
 
 **Cross-cutting**
+- Domain rules and models (required for product code with business logic)
 - API contract
 - Infrastructure and deployment (environments, provisioning, secrets)
 
@@ -59,7 +59,7 @@ For each, confirm it's needed and whether it stands alone or folds into another 
 
 Stop and park it as an open question when you're asking about:
 - request/response payloads, endpoint lists, schema fields
-- screen layouts, exact UX flows, copy
+- what is inside a unit: screen layouts, exact UX flows, copy (which units exist is not too deep, see the surface inventory)
 - library choices within an already-chosen stack
 - error-handling edge cases, retry policies, timeouts
 - performance numbers that don't change which chunks exist

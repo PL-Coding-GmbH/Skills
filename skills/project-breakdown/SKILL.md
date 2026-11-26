@@ -1,6 +1,6 @@
 ---
 name: project-breakdown
-description: Plan a software application from a vision into an ordered dependency graph of session-sized work chunks (foundations, contract, per-platform features, integration), with waves showing what can be built in parallel. Use when starting to plan an app from scratch or a large new build where the vision exists but components, stack and order are unclear. Interviews rigorously at the architecture level only, writes per-chunk files plus an overview, and generates an interactive graph viewer. Not for designing a single component in detail.
+description: Plan a software application from a vision into an ordered dependency graph of session-sized work chunks (domain, foundations, contract, fine-grained per-platform features), with waves showing what can be built in parallel. Use when starting to plan an app from scratch or a large new build where the vision exists but components, stack and order are unclear. Interviews rigorously at the architecture level only, writes per-chunk files plus an overview, and generates an interactive graph viewer. Not for designing a single component in detail.
 ---
 
 # Project Breakdown
@@ -11,20 +11,31 @@ This skill stays at the architecture level. It does **not** design components (n
 
 ## What a chunk is
 
-A chunk is one piece of work a single agent session can complete within a 1M-token context, comfortably before the point where you'd want to clear context. Examples: "WebSocket client infrastructure incl. connection lifecycle", "Design system and theme for the Android app", "API contract", "Backend authentication".
+A chunk is one piece of work a single agent session can finish while staying focused: the agent holds the whole task in view and doesn't drift into unrelated parts of the system. Judge this by scope (outcomes, units, new concepts), never by estimated token counts. Examples: "Domain rules and models", "WebSocket client infrastructure incl. connection lifecycle", "Design system and theme for the Android app", "API contract", "Backend authentication".
 
 Every chunk must pass all four checks:
 
 1. **One outcome.** It can be described in one sentence without "and also".
-2. **Verifiable.** There is a clear done state (tests pass, screen works against fakes, pipeline deploys to staging).
+2. **Verifiable.** There is a clear done state (tests pass, screen renders and reacts with stub data, pipeline deploys to staging).
 3. **Mergeable.** It leaves the codebase in a working state on its own.
 4. **One codebase.** It touches exactly one deployable or platform layer (backend, one client app, a shared client module, infrastructure). A feature like auth becomes separate chunks per platform, never one chunk spanning backend and client.
 
-Sizes: **S** (a focused fraction of a session), **M** (a solid session), **L** (a full session, the maximum). Anything bigger than L must be split. Merge S chunks into a related chunk when they would otherwise be trivial standalone work (a single CI config file belongs in the scaffolding chunk; a dedicated CI/CD chunk only exists when the pipeline work is substantial). Stack choices change sizes: two native apps means two sets of client chunks, a shared KMP or cross-platform module means one shared set plus thinner platform chunks.
+Sizes, judged by scope:
+- **S:** one narrow outcome with little new structure (one simple screen, a single endpoint, a config-level foundation).
+- **M:** one outcome with several internal parts (a screen with multiple states and its logic, the base components of a design system).
+- **L:** one outcome that the split rule can't divide but that is clearly bigger than M. The maximum.
+
+Aim for S and M. L is the exception: an L chunk must state in its file why it can't be split. Anything bigger than L must be split.
+
+**Split rule.** If parts of a chunk can be built and verified independently of each other, they are separate chunks. Apply this to every candidate, including features: a feature is usually several chunks per platform, not one. The checks above say what a chunk must be; this rule says when one candidate is really several.
+
+Merge S chunks into a related chunk when they would otherwise be trivial standalone work (a single CI config file belongs in the scaffolding chunk; a dedicated CI/CD chunk only exists when the pipeline work is substantial). Stack choices change sizes: two native apps means two sets of client chunks, a shared KMP or cross-platform module means one shared set plus thinner platform chunks.
 
 ## The interview rule
 
 Ask a question only if its answer could **add or remove a chunk, change a dependency edge, or change a chunk's size enough to split or merge it.** Everything else is an implementation detail: do not ask it now, write it into the relevant chunk file under "Open questions" for the deep-dive session.
+
+Which units exist is graph-relevant; what is inside a unit is not. "Which screens does the app have?" can add chunks and must be asked. "What does the settings screen show?" is an open question for that chunk's session.
 
 Never fill gaps with assumptions. If something graph-relevant is unknown and not answerable from the repo or what the user said, ask. Do not re-ask what is already in the conversation, in existing breakdown files, or in the repo.
 
@@ -60,9 +71,10 @@ Create a task list with the phases below so progress is visible.
 ### Phase 1 — Vision and high-level areas
 
 1. If the user hasn't described the vision, ask for it in plain text: what the product does, who uses it, which platforms, what the first shippable version must include.
-2. Derive the **areas**: one per deployable or platform (backend, each client, shared client module, admin panel, …) plus cross-cutting areas (infrastructure, API contract). Use the area discovery list in `references/interview-checklists.md` to find areas the user didn't mention (real-time, push, payments, media, background jobs, admin tooling, third-party integrations). Ask about each candidate the vision leaves open.
+2. Derive the **areas**: one per deployable or platform (backend, each client, shared client module, admin panel, …) plus cross-cutting areas (domain, infrastructure, API contract). Use the area discovery list in `references/interview-checklists.md` to find areas the user didn't mention (real-time, push, payments, media, background jobs, admin tooling, third-party integrations). Ask about each candidate the vision leaves open.
 3. Establish **scope**: which user-facing features are in the first version. Use a multiSelect question with the features you inferred; anything excluded is recorded as out of scope.
-4. **Approval gate 1:** present the areas and in-scope feature list in a short message and get explicit confirmation before continuing.
+4. Build the **surface inventory**: the concrete units that users or other systems interact with directly, per area. What a unit is depends on the product. Examples: screens of a mobile app, pages of a web app, commands of a CLI, resources of a public API, scheduled jobs, webhooks, reports. Propose the inventory you can infer from the in-scope features and ask the user to confirm, add and remove units. Each unit is a candidate chunk (or a few, after the split rule); none may end up without a chunk that builds it. Don't ask what is inside a unit.
+5. **Approval gate 1:** present the areas, the in-scope feature list and the surface inventory in a short message and get explicit confirmation before continuing.
 
 ### Phase 2 — Tech stack and trade-offs
 
@@ -75,7 +87,7 @@ Only decide what affects the graph (e.g. "KMP shared module vs. two native apps"
 
 ### Phase 3 — Area deep-dive
 
-Go area by area. For each, ask only the graph-relevant questions from `references/interview-checklists.md`, and proactively walk the **foundation checklist**. Foundations are the most important output of the early graph: independent, project-internal building blocks (scaffolding/architecture, design system, real-time client, persistence, infrastructure, CI/CD, auth per platform, fake API layer) that can be built in parallel at the start and later combined into features. Push to identify all of them; for each candidate, confirm it is needed and whether it is big enough to stand alone or folds into another chunk.
+Go area by area. For each, ask only the graph-relevant questions from `references/interview-checklists.md`, and proactively walk the **foundation checklist**. Foundations are the most important output of the early graph: independent, project-internal building blocks (domain rules and models, scaffolding/architecture, design system, real-time client, persistence, infrastructure, CI/CD, auth per platform) that can be built in parallel at the start and later combined into features. Push to identify all of them; for each candidate, confirm it is needed and whether it is big enough to stand alone or folds into another chunk.
 
 Stop drilling once you can draw every chunk and edge with confidence. If you find yourself asking about payloads, schemas, screen layouts or library APIs, you have gone too deep: write it down as an open question instead.
 
@@ -94,13 +106,14 @@ Fix every error (unknown ids, cycles, oversized chunks) and review the warnings 
 #### Structural rules
 
 - **Edges are hard dependencies only.** B depends on A only if B cannot start without A's output. "Would be nicer after" is not an edge. Avoid transitive edges (if C needs B and B needs A, C does not also list A unless it uses A's output directly).
+- **Domain first.** Whenever the plan builds product code with business logic, a cross-cutting **domain** chunk in wave 1 settles the domain rules and models before anything builds on them. Its format is up to its session. Every chunk that uses domain concepts depends on it; scaffolding, infrastructure and other chunks that don't need the domain can run beside it in wave 1. Skip it only when there is no real domain (e.g. pure infrastructure or tooling) and record why in `INTERVIEW.md`.
 - **Scaffolding first per codebase.** Each codebase gets a scaffolding/architecture chunk (build system, module structure, base architecture, CI config when small). Most other chunks of that codebase depend on it.
-- **Contract first.** When clients talk to a backend built in this plan, an **API contract** chunk is an early root. It is one chunk; split by domain only for very large applications.
-- **Clients develop against fakes.** Each client (or shared client module) gets a **fake API layer** chunk that depends on the contract and models production behavior, including error cases. Client feature chunks depend on the fake layer, never on backend chunks.
-- **Integration at the end.** Each client gets a final **integrate with real backend** chunk that depends on the client's feature chunks, the backend chunks it consumes, and the deployment/infrastructure chunk. This is the only place where client and backend meet.
-- **Per-platform features.** A user-facing feature becomes one chunk per platform (backend part, each client part), each depending on that platform's foundations.
+- **Contract after domain.** When clients talk to a backend built in this plan, an **API contract** chunk depends on the domain chunk and is an early root for everything that crosses the client–backend boundary. It is one chunk; split by domain only for very large applications.
+- **Client–backend sequencing is a user decision.** Client work such as UI and client-side domain logic can usually start before the backend exists, using stubs or empty implementations. Ask how client and backend work should meet (e.g. client chunks depend directly on the backend chunks they call, or a final integration chunk per client) and draw the edges accordingly.
+- **Per-platform features.** A user-facing feature becomes separate chunks per platform, each depending on that platform's foundations, and the split rule usually divides it further along the surface inventory.
+- **Inventory coverage.** Every unit in the surface inventory maps to a chunk that builds it.
 - **Infrastructure is its own chunk** (provisioning, environments, deployment). CI/CD is its own chunk only if substantial; otherwise it folds into scaffolding.
-- **Size check.** Every chunk passes the four checks above and is S, M, or L.
+- **Size check.** Every chunk passes the four checks and the split rule above, and is S or M unless its file justifies L.
 
 ### Phase 5 — Write the files
 
